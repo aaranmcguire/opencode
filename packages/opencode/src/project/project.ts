@@ -13,6 +13,7 @@ import { BusEvent } from "@/bus/bus-event"
 import { iife } from "@/util/iife"
 import { GlobalBus } from "@/bus/global"
 import { existsSync } from "fs"
+import { Config } from "../config/config"
 
 export namespace Project {
   const log = Log.create({ service: "project" })
@@ -196,6 +197,7 @@ export namespace Project {
     if (!existing.sandboxes) existing.sandboxes = []
 
     if (Flag.OPENCODE_EXPERIMENTAL_ICON_DISCOVERY) discover(existing)
+    await discoverIconFromConfig(existing)
 
     const result: Info = {
       ...existing,
@@ -246,6 +248,38 @@ export namespace Project {
       },
     })
     return
+  }
+
+  async function discoverIconFromConfig(input: Info) {
+    // Skip if icon is already set via manual override
+    if (input.icon?.override) return
+
+    const config = await Config.get()
+    if (!config.icon) return
+
+    // Handle path-based icon from config
+    if (config.icon.path) {
+      const iconPath = path.isAbsolute(config.icon.path)
+        ? config.icon.path
+        : path.join(input.worktree, config.icon.path)
+
+      if (!existsSync(iconPath)) {
+        log.warn("icon path not found", { path: iconPath })
+        return
+      }
+
+      const file = Bun.file(iconPath)
+      const buffer = await file.arrayBuffer()
+      const base64 = Buffer.from(buffer).toString("base64")
+      const mime = file.type || "image/png"
+      const url = `data:${mime};base64,${base64}`
+      await update({
+        projectID: input.id,
+        icon: {
+          url,
+        },
+      })
+    }
   }
 
   async function migrateFromGlobal(newProjectID: string, worktree: string) {

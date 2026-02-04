@@ -1701,6 +1701,15 @@ export type Config = {
    */
   username?: string
   /**
+   * Project icon configuration
+   */
+  icon?: {
+    /**
+     * Path to an image file to use as the project icon
+     */
+    path?: string
+  }
+  /**
    * @deprecated Use `agent` field instead.
    */
   mode?: {

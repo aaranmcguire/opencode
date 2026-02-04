@@ -1012,6 +1012,12 @@ export namespace Config {
         .string()
         .optional()
         .describe("Custom username to display in conversations instead of system username"),
+      icon: z
+        .object({
+          path: z.string().optional().describe("Path to an image file to use as the project icon"),
+        })
+        .optional()
+        .describe("Project icon configuration"),
       mode: z
         .object({
           build: Agent.optional(),
